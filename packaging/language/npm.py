@@ -74,6 +74,12 @@ options:
     required: false
     default: present
     choices: [ "present", "absent", "latest" ]
+  unsafe_perm:
+    description:
+      - Use the --unsafe-perm flag when installing.
+    required: false
+    choices: [ "yes", "no" ]
+    default: no
 '''
 
 EXAMPLES = '''
@@ -118,6 +124,7 @@ class Npm(object):
         self.path = kwargs['path']
         self.registry = kwargs['registry']
         self.production = kwargs['production']
+        self.unsafe_perm = kwargs['unsafe_perm']
         self.ignore_scripts = kwargs['ignore_scripts']
 
         if kwargs['executable']:
@@ -136,6 +143,8 @@ class Npm(object):
 
             if self.glbl:
                 cmd.append('--global')
+            if self.unsafe_perm:
+                cmd.append('--unsafe-perm')
             if self.production:
                 cmd.append('--production')
             if self.ignore_scripts:
@@ -212,6 +221,7 @@ def main():
         production=dict(default='no', type='bool'),
         executable=dict(default=None),
         registry=dict(default=None),
+        unsafe_perm=dict(default=False, type='bool'),
         state=dict(default='present', choices=['present', 'absent', 'latest']),
         ignore_scripts=dict(default=False, type='bool'),
     )
@@ -230,6 +240,7 @@ def main():
     registry = module.params['registry']
     state = module.params['state']
     ignore_scripts = module.params['ignore_scripts']
+    unsafe_perm = module.params['unsafe_perm']
 
     if not path and not glbl:
         module.fail_json(msg='path must be specified when not using global')
@@ -237,7 +248,8 @@ def main():
         module.fail_json(msg='uninstalling a package is only available for named packages')
 
     npm = Npm(module, name=name, path=path, version=version, glbl=glbl, production=production, \
-              executable=executable, registry=registry, ignore_scripts=ignore_scripts)
+              executable=executable, registry=registry, ignore_scripts=ignore_scripts, \
+              unsafe_perm=unsafe_perm)
 
     changed = False
     if state == 'present':
